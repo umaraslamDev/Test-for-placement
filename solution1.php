@@ -1,3 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+     <title></title>
+</head>
+<body>
+     <div>
+
+          <form action="solution1.php" method="post">
+               <label>SKU</label>
+               <input type="text" name="sku" id="sku">
+               <button type="submit">Submit</button>
+          </form>
+         <!--  <?php
+          if(isset($_POST['sku'])){
+          ?>
+          <input type="text" name="newval" value="<?= $_POST['sku']?>" >
+          <?php
+          }
+          ?> -->
+     </div>
+</body>
+</html>
+
+
 <?php
 
 
@@ -11,46 +36,63 @@
 // Notes:
 // - Transactions may exist for SKUs which are not present in `stock.json`. It should be assumed that the starting quantity for these is 0.
 
-$stock = file_get_contents('stock.json');
-$json_data = json_decode($stock,true);
-$transaction = file_get_contents('transactions.json');
-$json_data1 = json_decode($transaction,true);
+class stock 
+{
+     public $sku;
+     public $stock;     
+     public $transaction;
 
 
-check("DOK019240/66/49"); // here we will pass SKU
-
-function check($string){
-
-     global $json_data, $json_data1;
-     $sku=null;
-     $quantity =null;
-     $total=null;
-     $val=null;
-     $stock=null;
-
-     $return_obj=[];
-     if(!$string){
-          echo "please Enter SKU";
-          die;
-     }
-
-     foreach($json_data as $product){
-          if($product['sku'] == $string){
-               $sku = $product['sku'];
-               $stock=$product['stock']; 
+     public function setSku($sku){
+          if(!is_string($sku)){
+               throw new Exception('$sku must be a string!');
           }
+          $this->sku = $sku;
      }
-     foreach($json_data1 as $transaction){
+    
+     public function getSku(){
+          return $this->sku;
+     }
+
+     public function getStock(){
+          $stock = file_get_contents('stock.json');
+          return  json_decode($stock,true);
+     }
+
+     public function getTransacton(){
+          $transaction = file_get_contents('transactions.json');
+          return json_decode($transaction,true);
+     }
+
+     public function getSkuQuantity($string , $stocks , $transactions){
+
+          $sku=null;
+          $quantity =null;
+          $total=null;
+          $val=null;
+          $return_obj=[];
+          if(!$string){
+               echo "please Enter SKU";
+               die;
+          }
+
+          foreach($stocks as $product){
+               if($product['sku'] == $string){
+                    $sku = $product['sku'];
+                    $total=$product['stock'];  
+               }
+          }
+          foreach($transactions as $transaction){
           if($transaction['sku'] == $string){
                $quantity = $transaction;
                 
                $val =$transaction['qty'];
                if($transaction['type']=='order')
                {
-                    $stock+=$val;
+                    $total-=$val;
                }
                elseif ($transaction['type']=='refund') {
-                    $stock-=$val;
+                    $total+=$val;
                }
                
                
@@ -58,15 +100,33 @@ function check($string){
           }
      }
 
-     $return_obj["sku"] =(isset($sku)) ? $sku : ($quantity["sku"]) ? $quantity["sku"] : null;
-     $return_obj["qty"] =(isset($sku)) ? $stock : 0;
+          $return_obj["sku"] =(isset($sku)) ? $sku : ($quantity["sku"]) ? $quantity["sku"] : null;
+          $return_obj["qty"] =(isset($sku)) ? $total : 0;
 
-     if($sku == null && $quantity == null){
-          echo "SKU ".$string." not exist";
-          die;
+          if($sku == null && $quantity == null){
+               echo "SKU ".$string." not exist";
+               die;
+          }
+          $json_data = json_encode($return_obj,true);
+          return $json_data;
      }
-     $json_data = json_encode($return_obj,true);
-     echo $json_data;
-}
+     
+}    
+    
+     $stock = new stock();
 
-?>  
+     if(isset($_POST['sku'])){
+
+          $stock->setSku($_POST['sku']);
+          $result = $stock->getSkuQuantity($stock->getSku() , $stock->getStock() , $stock->getTransacton());
+          $array_formated = json_decode($result , true);
+          
+          echo "<h1>".$array_formated['sku']."</h1>";
+          echo "<h1>".$array_formated['qty']."</h1>";
+
+     }
+     
+
+?> 
+
+
