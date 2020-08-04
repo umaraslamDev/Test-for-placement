@@ -6,7 +6,7 @@
 <body>
      <div>
 
-          <form action="solution1.php" method="post">
+          <form action="stock.php" method="post">
                <label>SKU</label>
                <input type="text" name="sku" id="sku">
                <button type="submit">Submit</button>
@@ -95,18 +95,17 @@ class stock
                     $total+=$val;
                }
                
-               
-
           }
      }
 
           $return_obj["sku"] =(isset($sku)) ? $sku : ($quantity["sku"]) ? $quantity["sku"] : null;
-          $return_obj["qty"] =(isset($sku)) ? $total : 0;
+          $return_obj["qty"] =(isset($sku)) ? $total : ($quantity["sku"]) ? $total: null;
 
           if($sku == null && $quantity == null){
                echo "SKU ".$string." not exist";
                die;
           }
+
           $json_data = json_encode($return_obj,true);
           return $json_data;
      }
@@ -121,8 +120,8 @@ class stock
           $result = $stock->getSkuQuantity($stock->getSku() , $stock->getStock() , $stock->getTransacton());
           $array_formated = json_decode($result , true);
           
-          echo "<h1>".$array_formated['sku']."</h1>";
-          echo "<h1>".$array_formated['qty']."</h1>";
+          echo "<h4>"."SKU"."</h4>".$array_formated['sku']  ;
+          echo "<h4>"."Current stock"."</h4>".$array_formated['qty'];
 
      }
      
